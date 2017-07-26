@@ -1,0 +1,31 @@
+Start Jaeger:
+```bash
+docker run \
+    --rm \
+    -p5775:5775/udp \
+    -p6831:6831/udp \
+    -p6832:6832/udp \
+    -p5778:5778 \
+    -p16686:16686 \
+    -p14268:14268 \
+    --name jaeger \
+    jaegertracing/all-in-one:latest
+
+```
+
+Start the application:
+```java
+mvn wildfly-swarm:run \
+    -Dswarm.jaeger.service-name=opentracing-jdbc-swarm-demo \
+    -Dswarm.jaeger.sampler-type=const \
+    -Dswarm.jaeger.sampler-parameter=1 \
+    -Dswarm.ds.connection.url=jdbc:tracing:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE \
+    -Dswarm.jdbc.driver=io.opentracing.contrib.jdbc.TracingDriver
+```
+
+It doesn't work because of:
+```
+Caused by: javax.resource.ResourceException: IJ031083: Wrong driver class [org.h2.Driver] for this connection URL [jdbc:tracing:h2:mem:test]
+```
+
+Even though passing `swarm.jdbc.driver` should make the OpenTracing driver the preferred one: https://git.io/v73Gd
